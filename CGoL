@@ -1,0 +1,162 @@
+#! /bin/bash
+
+
+###create array and variables
+arr=()
+
+top=""
+bot=""
+
+coun=0
+counz=0
+
+prompt1="Enter \$x \$y, s to start or q to quit: "
+prompt2="Press Enter, a for auto or q to quit: "
+
+###create function to update the GUI
+gui() {
+	clear
+	###get current terminal size
+	ro=$(stty size | awk '{print $1}')
+	col=$(stty size | awk '{print $2}')
+	
+	###extend y if needed
+	if ((${#arr[@]}<ro-3))
+	then
+		for ((dif=${#arr[@]}; dif<ro-3; dif++)); do
+			row=""
+			for ((c=0; c<${#arr[0]}; c++)); do
+				row+="0"
+			done
+			arr+=("$row")
+		done
+	fi
+	
+	###extend x if needed
+	if ((${#arr[0]}<col-4))
+	then
+		###extend x coordinates---10 and higher						-todo
+		for ((c=${#arr[0]}; c<col-4; c++)); do
+			((coun++))
+			if ((coun>=10))
+			then
+				coun=0
+				((counz++))
+				top+="$counz"
+			else
+				top+="-"
+			fi
+			bot+="$coun"
+		done
+		###extend array
+		for ((el=0; el<${#arr[@]}; el++)); do
+			for ((ne=${#arr[el]}; ne<col-4; ne++)); do
+				arr[el]="${arr[el]}""0"
+			done
+		done
+	fi
+	
+	###print x coordinates
+	echo ${top:0:col-3}" x/"
+	echo ${bot:0:col-3}" /y"
+
+	###print grid and y coordinates---account for prompt length				-todo
+	count=0
+
+	for ((o=0; o<=ro-4; o++)); do
+		((count++))
+		echo ${arr[o]:0:$col-3} $count
+	done
+}
+
+###build the innitial grid
+gui
+
+###get coordinates for cells to toggle or the start prompt, then update the GUI
+run=false
+
+while [ $run == false ] 
+do
+	###print prompt 1
+	read -p "$prompt1" x y
+	###toggle cell
+	if ((0<x)) && ((x<=col-4)) && ((0<y)) && ((y<=ro-3))
+	then
+		if [ "${arr[$y-1]:$x-1:1}" = "0" ]
+		then
+			arr[$y-1]="${arr[$y-1]:0:$x-1}1${arr[$y-1]:$x}"
+		else
+			arr[$y-1]="${arr[$y-1]:0:$x-1}0${arr[$y-1]:$x}"
+		fi
+	###start game
+	elif [ "$x" = "s" ] && [ "$y" == "" ]
+	then
+		run=true
+	###quit
+	elif [ "$x" = "q" ] && [ "$y" == "" ]
+	then
+		clear
+		exit
+	##open help options									-todo
+	fi
+	###update GUI
+	gui
+	
+done
+
+###main loop
+while true
+do
+	###print prompt 2
+	read -p "$prompt2" e
+	
+	###update GUI
+	gui
+	
+	###detect if characters were writen
+	if ! [ "$e" == "" ]
+	then
+		##auto										-todo
+		### quit
+		if [ "$e" == "q" ]
+		then
+			clear
+			exit
+		fi
+	else
+		###calculate next gen in new array
+		narr=("${arr[@]}")
+		
+		c1=0
+		for n in ${arr[@]}; do
+			((cl++))
+			for ((ch=0; ch<${#n}; ch++)); do
+				l=0
+				li=()
+				li+=(${arr[$cl-2]:$ch-1:1} ${arr[$cl-2]:$ch:1} ${arr[$cl-2]:$ch+1:1} ${arr[$cl-1]:$ch-1:1} ${arr[$cl-1]:$ch+1:1} ${arr[$cl]:$ch-1:1} ${arr[$cl]:$ch:1} ${arr[$cl]:$ch+1:1})
+				for d in ${li[@]}; do
+					if [ $d == "1" ]
+					then
+						((l++))
+					fi
+				done
+				if [ "${arr[$cl-1]:$ch:1}" == "0" ] && [ $l == "3" ]
+				then
+					narr[$cl-1]="${narr[$cl-1]:0:$ch}1${narr[$cl-1]:$ch+1}"
+				elif [ "${arr[$cl-1]:$ch:1}" == "1" ]
+				then
+					if ((l<"2"||l>"3"))
+					then
+						narr[$cl-1]="${narr[$cl-1]:0:$ch}0${narr[$cl-1]:$ch+1}"
+					fi
+				fi
+			done
+		done
+		cl=0
+		###overwrite the main array with the new array
+		arr=("${narr[@]}")
+	fi
+	
+	###update GUI
+	gui
+done
