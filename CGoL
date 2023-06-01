@@ -10,8 +10,8 @@ bot=""
 coun=0
 counz=0
 
-prompt1="Enter \$x \$y, s to start or q to quit: "
-prompt2="Press Enter, a for auto or q to quit: "
+prompt1="Enter \$x \$y, s to start or q to quit: " ##-7 for input
+prompt2="Press Enter, a for auto or q to quit: " ##-3 for input
 
 ###create function to update the GUI
 gui() {
@@ -35,7 +35,7 @@ gui() {
 	###extend x if needed
 	if ((${#arr[0]}<col-4))
 	then
-		###extend x coordinates---10 and higher						-todo
+		###extend x coordinates
 		for ((c=${#arr[0]}; c<col-4; c++)); do
 			((coun++))
 			if ((coun>=10))
@@ -44,7 +44,10 @@ gui() {
 				((counz++))
 				top+="$counz"
 			else
-				top+="-"
+				if ((${#top}<col-4))
+				then
+					top+="-"
+				fi
 			fi
 			bot+="$coun"
 		done
@@ -65,7 +68,7 @@ gui() {
 
 	for ((o=0; o<=ro-4; o++)); do
 		((count++))
-		echo ${arr[o]:0:$col-3} $count
+		echo "${arr[o]:0:$col-3} $count"
 	done
 }
 
